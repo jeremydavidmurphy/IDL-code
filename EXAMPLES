@@ -1,0 +1,39 @@
+colors = intarr(n0)
+for j=0,n0-1 do colors[j] = 60 + (j * floor(165.0/n0))
+
+while !d.window ne -1 do wdelete, !d.window
+
+To convert a number into a string, and truncate some of it's range...
+d3 = strn(d3,format='(a10)')
+
+in multiple plots, to supress the notation along the x-axis
+tickformat='(A1)'
+
+force the xaxis scale to what you set it AND (this comes from the '8') supress the upper scale from being plotted.
+xstyle=1+8
+
+How to pick things out of a header...
+        cntr = 0	
+        out = 'lost'
+        repeat begin
+            hh = strsplit(h[cntr],' ',/extract)
+            if (hh[0] eq 'WAVEZP') then out = 'found' else cntr = cntr + 1
+            if (cntr eq nheader-1) then begin
+                out = 'found'
+                hh[2] = 0.0
+            endif
+        endrep until (out eq 'found')
+        wavezp[j] = float(hh[2])
+OR
+a = sxpar(headername,'variable',count)
+
+
+To plot a different y-axis...
+;loadct,0
+;plot,ttime,temperature,yrange=[20,50],ystyle=9,xrange=[1.1,2.0],xstyle=1
+;axis,yaxis=1,yrange=[0,1],/save
+;loadct,4
+;oplot,frametimes,coretotals/max(coretotals),color=150
+;oplot,frametimes,coretotals/frametotals,color=110
+
+!p.multi = [0,2,2,0,0]
