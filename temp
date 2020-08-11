@@ -1,0 +1,544 @@
+52c52
+< normspec = 'no' ;set to 'yes' to normalize the final spectra to have a value of ~1 in the red
+---
+> ;normspec = 'yes' ;set to 'yes' to normalize the final spectra to have a value of ~1 in the red
+129c129,131
+< ; got created, you can skip the interpolation step.
+---
+> ; got created, you can skip the interpolation step. THE DEFAULT IS TO
+> ; SKIP THIS STEP, SO YOU NEED TO SET THIS TO 'NO' IF YOU NEED TO
+> ; INTERPOLATE YOUR DATA.
+163a166
+>     if (IR eq 'no') then TRANS = 'no'
+177c180
+< if (n_elements(skipintpol) eq 0) then skipintpol = 'no'
+---
+> if (n_elements(skipintpol) eq 0) then skipintpol = 'yes'
+348a352
+>        alloffsets = [0,0,0,0,0]
+359a364,366
+>         cntsky = 0
+>         skyindex = 0
+>         nfibers = 0
+413,423c420,430
+<                         skyfactor = (tsci/(2.0*tsky) * (n_elements(imma)/1230.0)) ;the sky fudge factor (1230 = 5 * 246)
+<                         print,''
+<                         print,'The skyfactor is: '+strn(skyfactor)
+<                         tempnorm = median(da,dim=1) ;to catch rejected fibers so as not to include them in the skynoise values.
+<                         itemp = where(tempnorm ne -667.0,tempcount)
+<                         skynoise1 = sky1 * float(tempcount) * skyfactor ;the multiplication here accounts for the number of rows per fiber and number of fibers coming from a given frame.
+<                         skynoise2 = sky2 * float(tempcount) * skyfactor
+<                         skycounter = intarr(n_elements(imma)-1)-1
+<                         skycounter = [1,skycounter]
+< 
+<                     endif else begin
+---
+> ;                        skyfactor = (tsci/(2.0*tsky) * (n_elements(imma)/1230.0)) ;the sky fudge factor (1230 = 5 * 246)
+> ;                        print,''
+> ;                        print,'The skyfactor is: '+strn(skyfactor)
+> ;                        tempnorm = median(da,dim=1) ;to catch rejected fibers so as not to include them in the skynoise values.
+> ;                        itemp = where(tempnorm ne -667.0,tempcount)
+> ;                        skynoise1 = sky1 * float(tempcount) * skyfactor ;the multiplication here accounts for the number of rows per fiber and number of fibers coming from a given frame.
+> ;                        skynoise2 = sky2 * float(tempcount) * skyfactor
+>                         skynoise1 = sky1
+>                         skynoise2 = sky2
+>                         temp = intarr(n_elements(imma)-1)-1
+>                         skycounter = [1,temp]
+424a432
+>                      endif else begin
+433,439c441,449
+<                         skyfactor = (tsci/(2.0*tsky) * (n_elements(imma)/1230.0))
+<                         print,''
+<                         print,'The skyfactor is: '+strn(skyfactor)
+<                         tempnorm = median(da,dim=1) ;to catch rejected fibers so as not to include them in the skynoise values.
+<                         itemp = where(tempnorm ne -667.0,tempcount)
+<                         skynoise1 = [[skynoise1],[sky1 * float(tempcount) * skyfactor]]
+<                         skynoise2 = [[skynoise2],[sky2 * float(tempcount) * skyfactor]]
+---
+> ;                        skyfactor = (tsci/(2.0*tsky) * (n_elements(imma)/1230.0))
+> ;                        print,''
+> ;                        print,'The skyfactor is: '+strn(skyfactor)
+> ;                        tempnorm = median(da,dim=1) ;to catch rejected fibers so as not to include them in the skynoise values.
+> ;                        itemp = where(tempnorm ne -667.0,tempcount)
+> ;                        skynoise1 = [[skynoise1],[sky1 * float(tempcount) * skyfactor]]
+> ;                        skynoise2 = [[skynoise2],[sky2 * float(tempcount) * skyfactor]]
+>                         skynoise1 = [[skynoise1],[sky1]]
+>                         skynoise2 = [[skynoise2],[sky2]]
+441a452,459
+>                      endelse
+>                     
+>                      skyindexadd = intarr(n_elements(imma)) + cntsky
+>                      skyindex = [skyindex,skyindexadd]
+>                      nfiberfactor = n_elements(imma)/5.0
+>                      nfiberadd = intarr(n_elements(imma)) + nfiberfactor
+>                      nfibers = [nfibers,nfiberadd]
+>                      cntsky = cntsky + 1
+443,445c461
+<                     endelse
+< 
+<                     for m=0,n_elements(iff)-1 do begin ;a loop over the index of the fibers found in a given pointing. This is bookkeeping for the dRA and dDec offsets that get written out later.
+---
+>                      for m=0,n_elements(iff)-1 do begin ;a loop over the index of the fibers found in a given pointing. This is bookkeeping for the dRA and dDec offsets that get written out later.
+482a499,502
+> 
+>         skyindex = skyindex[1:*]
+>         nfibers = nfibers[1:*]
+> 
+489c509,511
+<         
+---
+>         airmassarr = 0
+>         skycounter = 0
+> 
+524c546,548
+<         ineg = where(allfibnorm le 0.0,countneg) ;04/22/2011: To catch the possibility of a negative fiber normalization (due to oversubtraction of the sky, most likely).
+---
+> ;        allnoisenorm = median(allnoise,dim=1)
+> 
+>        ineg = where(allfibnorm le 0.0,countneg) ;04/22/2011: To catch the possibility of a negative fiber normalization (due to oversubtraction of the sky, most likely).
+527c551
+<            alldata[*,ineg] = -667.0 ;04/22/2011: Any oversubtracted fiber row is set to -666 and later rejected
+---
+>            alldata[*,ineg] = -667.0 ;04/22/2011: Any oversubtracted fiber row is set to -667 and later rejected
+530a555,556
+>         i666 = where(alldata eq -666.0,countbad) ;this index are for cosmic rays.
+> 
+540a567
+> 
+547,554d573
+< ;        test = float(nFINAL/nALL) ;??????????????????????? THIS IS
+< ;        SUPPOSED TO ACCOUNT FOR NOT INCLUDING THE SKY NOISE FROM
+< ;        FIBERS THAT GET REJECTED. 
+< ;        if test lt 1.0 then begin ;if some fibers are tossed the sky noise needs to be adjusted (we don't want to count that noise when we've tossed a fiber)
+< ;           isky = where(allskycounter eq 1,countsky)
+< ;           badfibercorrection = test + (test * 1.0/countsky)
+< ;        endif ;????????????????????????????
+< 
+558,559d576
+<  
+<         i666 = where(alldata eq -666.0,countbad) ;this index are for cosmic rays. The bad fibers are gone at this point.
+565c582
+<            
+---
+> 
+568c585
+<                  print,'Stepping over a bad fiber!'
+---
+>                  print,'Stepping over rejected row #'+strn(k+1)
+605a623,626
+> 
+>            allfibnorm = median(alldata,dim=1) ;a new scaling is created after the IR and trans corrections
+>            allnoisenorm = median(allnoise,dim=1) ;a new scaling is created after the IR and trans corrections
+>            
+614a636,638
+>         alldata[i666] = -666.0 ;the bad pixel flags get put back BEFORE the bad fibers are tossed. Otherwise the i666 index is off.
+>         allnoise[i666] = -666.0
+>         
+619c643,669
+<            
+---
+>         skyindex = skyindex[GOODindex]
+> 
+>         i666 = where(alldata eq -666.0,countbad) ;a new i666 index is developed, after the bad fibers are tossed.
+> ;        izero = where(allnoise le 0.0,countzero) ;these are edge values that get screwed up in the linear interpolation step.
+> 
+>         outarray = fltarr(n1,13) ;the final array: biweight data, inverse variance data, various s2n estimates, wavelength
+> 
+>         if (swch3 eq 'on') then begin
+>            sxaddpar,datahead,'COMMENT','  Row 1  : data made via the biweightf function'
+>            sxaddpar,datahead,'COMMENT','  Row 2  : noise for the biweightf function'
+>            sxaddpar,datahead,'COMMENT','  Row 3  : biweight noise via S/N_weighted'
+>            sxaddpar,datahead,'COMMENT','  Row 4  : biweight noise via S/N_unweighted'
+>            sxaddpar,datahead,'COMMENT','  Row 5  : data made with the meanwclipf function (IVW)'
+>            sxaddpar,datahead,'COMMENT','  Row 6  : noise for the meanwclipf function'
+>            sxaddpar,datahead,'COMMENT','  Row 7  : IVW noise via S/N_weighted'
+>            sxaddpar,datahead,'COMMENT','  Row 8  : IVW noise via S/N_unweighted'
+>            sxaddpar,datahead,'COMMENT','  Row 9  : the classic weighted S/N calculation'
+>            sxaddpar,datahead,'COMMENT','  Row 10 : the classic unweighted S/N calculation'
+>            sxaddpar,datahead,'COMMENT','  Row 11 : biweight data, normalized to 1.0 around 5000 A'
+>            sxaddpar,datahead,'COMMENT','  Row 12 : IVW data, normalized to 1.0 around 5000 A'
+>            sxaddpar,datahead,'COMMENT','  Row 13 : the wavelength'
+>            swch3 = 'off'
+>         endif
+> 
+> 
+>         allfibnormN = allfibnorm / max(allfibnorm)
+> 
+621c671
+< ;                        THE SIGNAL-TO-NOISE CALCULATION
+---
+> ;                        THE NOISE CALCULATION
+629,655d678
+<         if (countbad gt 0) then alldata[i666] = 0.0 ;the signal is set to zero so as not to mess with the S2N calculation.
+<         if (countbad gt 0) then allnoise[i666] = 0.0 ;the noise is set to zero so as not to be included in the noise calculation.
+<         if (countbad gt 0) then alldataS[i666] = 0.0 ;the signal is set to zero so as not to mess with the S2N calculation.
+<         if (countbad gt 0) then allnoise[i666] = 0.0 ;the noise is set to zero so as not to be included in the noise calculation.
+< 
+<         S2N1  = fltarr(n1)
+<         S2N2  = fltarr(n1)
+< 
+<         for s=0,n1-1 do begin          ;a loop over wavelength
+<            sig1 = total(alldata[s,*])  ;CLASSICAL S/N CALCULATION
+<            noi1 = sqrt(total(allnoise[s,*]^2)); + total(skynoise1[s,*]^2) + total(skynoise2[s,*]^2))
+<            noi2 = sqrt(total(allnoise[s,*]^2) + total(skynoise1[s,*]^2) + total(skynoise2[s,*]^2))
+<            S2N1[s] = sig1/noi1
+<            S2N2[s] = sig1/noi2
+<         endfor
+<         
+<         for s=0,n1-1 do begin ;a loop over wavelength
+<            sn = 0.0
+<            for ss=0,n_elements(alldata[s,*])-1 do begin ;a loop over the number of elements
+<               signal = alldata[s,ss]
+<               noise = sqrt(allnoise2[s,ss]) + skyfactor * (sqrt(allsky1[s,ss]) +sqrt(allsky2[s,ss]))
+<               value = (signal/noise)^2
+<               sn = [sn,value]
+<            endfor
+<            sn = sn[1:*]
+<            S2Na[s] = sqrt(total(sn))
+<         endfor
+657,660c680
+<         outarray = fltarr(n1,7) ;the final array: data, S/N1, S/N2 and wavelength
+< ;        outarray = fltarr(n1,3) ;the final array: data, S/N1, S/N2 and wavelength
+<         outarray[*,4] = S2N1
+<         outarray[*,5] = S2N2
+---
+>         tskyscale = (tsci / (2.0 * tsky))
+663,664c683,684
+<            alldata[i666] = -666.0 ;now that the S/N is calculated, the masked pixels are set back to -666               
+<            allnoise[i666] = -666.0
+---
+>            allnoise[i666] = 0.0
+>            alldata[i666] = 0.0
+665a686,689
+> ;        if (countzero gt 0) then begin
+> ;           allnoise[izero] = 0.0
+> ;           alldata[izero] = 0.0
+> ;        endif
+667,686c691,707
+<         alldataS = alldata
+<         for k=0,nFINAL-1 do alldataS[*,k] = alldata[*,k] / allfibnorm[k] ;the data is scaled to be at approximately the same flux.
+<         allnoiseS = alldata
+<         for k=0,nFINAL-1 do alldataS[*,k] = alldata[*,k] / allfibnorm[k] ;the data is scaled to be at approximately the same flux.
+< 
+< 
+< ;------------------------------------------------------------------------------
+<         if (COMB eq 'sum') then begin
+< ;                              A STRAIGHT SUMMATION
+< ;------------------------------------------------------------------------------
+<             if (swch4 eq 'on') then sxaddpar,datahead,'COMMENT','  The spectra was made via a straight summation'
+<             temp1 = alldata
+<             outdata = total(temp1,dim=2)
+<             swch4 = 'off'
+<         endif
+<            
+< ;------------------------------------------------------------------------------
+<         if (COMB eq 'biwt') then begin
+< ;                                  THE BIWEIGHT
+< ;------------------------------------------------------------------------------
+---
+>         noiseIVW  = fltarr(n1)
+>         noiseBWT  = fltarr(n1)
+>         S2N1 = fltarr(n1)
+>         S2N2 = fltarr(n1)
+> 
+>         for s=0,n1-1 do begin   ;a loop over wavelength for the biweight and inverse variance noise estimate
+>            igood = where(allnoise[s,*] gt 0.0,ngood)
+>            if (ngood eq 0) then goto, jumpdeadcolumn
+>            signal = fltarr(ngood)
+>            noise = fltarr(ngood)
+> 
+>            for ss=0,ngood-1 do begin ;a loop over each row in the array for a given bin
+>               inow = igood[ss]
+>               skyfactor =  tskyscale * (nfibers[inow]/246.0)
+>               signal[ss] = alldata[s,inow]
+>               noise[ss] = allnoise[s,inow] + (skyfactor *skynoise1[s,skyindex[inow]]) + (skyfactor * skynoise2[s,skyindex[inow]])
+>            endfor
+688,690c709,738
+<            if (swch5 eq 'on') then begin
+<               sxaddpar,datahead,'COMMENT','  The spectra was made via the biweightf function'
+<               swch5 = 'off'
+---
+>            ssignal = signal / allfibnorm[igood] ;the scaled signal
+> ;           ssignal = signal / allfibnormN[igood] ;the scaled signal
+>            Tsignal = total(ssignal) ;the scaled signal for a given wavelength, s
+> 
+>            snoise = noise / allfibnorm[igood] ;the scaled noise
+> ;           snoise = noise / allfibnormN[igood] ;the scaled noise
+>            snoise2 = snoise^2.0 ;the scaled variance array3
+> 
+>            scale = 1.0 / allfibnorm[igood]
+> ;           scale = 1.0 / allfibnormN[igood]
+>            scale2 = scale^2.0
+>            Tscale2 = total(scale2)
+> 
+>            weight = (1.0 / noise)^2
+>            Tweight = total(weight)
+> 
+>            noiseIVW[s] = sqrt (Tscale2 / Tweight) ;NOTE- THIS IS NOT THE SCALED WEIGHT RIGHT NOW!
+>            noiseBWT[s] = sqrt(total(((1.253/sqrt(ngood)) * snoise)^2))
+>            S2N1[s] = Tsignal / sqrt(total(snoise2))
+>            S2N2[s] = total(signal) / sqrt(total(noise^2))
+> ;           S2N2[s] = sqrt(total((signal/noise)^2))
+> ;           ;Cappellari's value
+>            jumpdeadcolumn:
+>            if (ngood eq 0) then begin
+>               print,''
+>               print,'All values for column #'+strn(s-1)+' was rejected!'
+>               noiseIVW[s] = 0.0
+>               noiseBWT[s] = 0.0
+>               S2N1[s] = 0.0
+>               S2N2[s] = 0.0
+692c740
+<            print,''
+---
+>         endfor
+694,699c742,760
+<            temp1 = alldata
+<            outdata = biweightf(temp1,plotF='off')
+<            outarray[*,0] = outdata
+<            temp1 = alldataS
+<            outdata = biweightf(temp1,plotF='off')
+<            outarray[*,2] = outdata
+---
+>         outarray[*,1] = noiseBWT
+>         outarray[*,5] = noiseIVW
+>         outarray[*,8] = S2N1
+>         outarray[*,9] = S2N2
+>         
+>  ;now that the S/N is calculated, the masked pixels are set back to -666               
+>         if (countbad gt 0) then allnoise[i666] = -666.0 
+>         weights = 1.0 / allnoise^2
+>         if (countbad gt 0) then weights[i666] = -666.0
+>         for k=0,nFINAL-1 do alldata[*,k] = alldata[*,k] / allfibnorm[k]
+>         if (countbad gt 0) then alldata[i666] = -666.0
+> 
+> ;------------------------------------------------------------------------------
+> ;                                 THE BIWEIGHT
+> ;------------------------------------------------------------------------------        
+> 
+>         temp1 = alldata
+>         outdata = biweightf(temp1,plotF='off')
+>         outarray[*,0] = outdata
+701c762,763
+<         endif
+---
+>         outarray[*,2] = outarray[*,0] / outarray[*,8]
+>         outarray[*,3] = outarray[*,0] / outarray[*,9]
+704d765
+< ;        if (COMB eq 'mean') then begin
+708c769,776
+< ;THIS IS CURRENTLY UNDER CONSTRUCTION...
+---
+>         print,''
+>         print,'Running the weighted average...'
+>         temp1 = alldata
+>         for k=0,n1-1 do outdata[k] = meanwclipf(temp1[k,*],weights[k,*])
+>         outarray[*,4] = outdata
+>         
+>         outarray[*,6] = outarray[*,4] / outarray[*,8]
+>         outarray[*,7] = outarray[*,4] / outarray[*,9]
+710,736c778
+< ;           if (swch6 eq 'on') then begin
+< ;              sxaddpar,datahead,'COMMENT','  The spectra was made via the meanWclipF function'
+< ;              swch6 = 'off'
+< ;           endif
+<            temp1 = alldata
+<            wgts1 = 1.0 / (allnoise^2) ;the classic inverse-variance weighting- this should be equal to the pefw.fits file
+< ;           skywgt1 = 1.0/(sky1^2)
+< ;           skywgt2 = 1.0/(sky2^2)
+< ;           wgts2 = wgts1
+< ;           for s=0,n_elements(alldata[0,*])-1 do begin
+< ;              wgts2[s] = total(alldataCOR[*,s]) / total(1.0/wgts1[*,s] + skyfactor * (1.0/skywgt1 + 1.0/skywgt2))
+< ;           endfor
+< ;           outdata2 = fltarr(n1)
+<            print,'Running the weighted average...'
+<            for k=0,n1-1 do outdata[k] = meanwclipf(temp1[k,*],wgts1[k,*])
+<            outarray[*,1] = outdata
+<            temp1 = alldataS
+<            for k=0,n1-1 do outdata[k] = meanwclipf(temp1[k,*],wgts1[k,*])
+<            outarray[*,3] = outdata
+< ;           array[*,4] = outdata
+< ;           temp1 = alldataCOR
+< ;           for k=0,n1-1 do outdata[k] = meanwclipf(temp1[k,*],wgts2[k,*])
+< ;           array[*,6] = outdata
+< ;           temp1 = 0.0
+< ;           temp2 = 0.0
+< ;        endif
+<            outarray[*,6] = wave
+---
+>         outarray[*,12] = wave
+739c781
+< ;                       THE FINAL SPECTRA IS NORMALIZED TO 1
+---
+> ;          THE FINAL SPECTRA IS NORMALIZED TO 1 AND WRITTEN OUT
+742,766c784,791
+<        if (normspec eq 'yes') then begin
+<           if (swch10 eq 'on') then begin
+<              sxaddpar,datahead,'COMMENT','  The spectra has been normalized to 1, centered around 5000 AA'
+<              swch10 = 'off'
+<           endif
+< 
+<            i5000 = where(wave ge 4950.0 and wave le 5050.0)
+<            norm = median(outarray[i5000,0],dim=1)
+<            outarray[*,0] = outarray[*,0] / norm
+<            norm = median(outarray[i5000,1],dim=1)
+<            outarray[*,1] = outarray[*,1] / norm
+<            norm = median(outarray[i5000,2],dim=1)
+<            outarray[*,2] = outarray[*,2] / norm
+<            norm = median(outarray[i5000,3],dim=1)
+<            outarray[*,3] = outarray[*,3] / norm
+< ;           outdata = outdata / norm
+<         endif
+< 
+< ;        outarray[*,0] = outdata
+< ;        outarray[*,3] = wave
+<        finalarray = fltarr(n1,4) ;scaled biweight, scaled inverse-variance, S/N, wavelength
+<        finalarray[*,0] = outarray[*,3]
+<        finalarray[*,1] = outarray[*,4]
+<        finalarray[*,2] = wave
+<         writefits,outnamed,finalarray,datahead ;THE FINAL ARRAY IS WRITTEN OUT
+---
+>         i5000 = where(wave ge 4950.0 and wave le 5050.0)
+>         norm = median(outarray[i5000,0],dim=1)
+>         outarray[*,10] = outarray[*,0] / norm
+>         
+>         norm = median(outarray[i5000,4],dim=1)
+>         outarray[*,11] = outarray[*,4] / norm
+>         
+>         writefits,outnamed,outarray,datahead ;THE FINAL ARRAY IS WRITTEN OUT
+772,775d796
+< ; MODIFIED ON 04/11/09: The old method doesn't work as bins commonly
+< ; combine fibers across the major axis. The new routine now simply
+< ; returns the dRA and dDec values for ALL THE FIBERS in each bin. 
+< 
+779a801
+>            if (alloffsets[0,0] eq 0.0) then alloffsets = alloffsets[*,1:*]
+800,809c822,824
+< ;            plot,wave,outarray[*,1],title='The signal-to-noise for '+binname,$
+< ;              xrange=[3700,5500],xtitle='Wavelength (A)',/xstyle,$
+< ;              ytitle='S/N',/ynozero
+<             plot,wave,outarray[*,0],title='The unscaled data '+binname,$
+<               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,$
+<               ytitle='S/N',/ynozero
+< ;            wait,0.5
+< ;            loadct,4,/silent
+< ;            oplot,wave,outarray[*,2],color=255
+< ;            pause
+---
+> 
+>             plot,wave,outarray[*,0],title='The data for '+binname+' (black = biweight, white = inverse variance weighted)',$
+>               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,ytitle='Flux',/ynozero
+812d826
+< ;            pause
+814,815c828,829
+<             oplot,wave,outarray[*,0],thick=2
+<             oplot,wave,outarray[*,1],color=100,thick=2
+---
+>             oplot,wave,outarray[*,0],color=0,thick=2
+>             oplot,wave,outarray[*,4],color=250,thick=2
+820,836c834,846
+< ;            plot,wave,outarray[*,0],title='The final spectra for '+binname,$
+< ;              xrange=[3700,5500],xtitle='Wavelength (A)',/xstyle,$
+< ;              ytitle='Flux',/ynozero
+< ;            loadct,4,/silent
+< ;            oplot,wave,outarray[*,1],color=255
+< ;            loadct,0,/silent
+<             plot,wave,outarray[*,2],title='The scaled data '+binname,$
+<               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,$
+<               ytitle='Flux',/ynozero
+< ;            loadct,4,/silent
+< ;            oplot,wave,outarray[*,3],color=255
+<             loadct,33
+<             for jjj=0,n_elements(alldatas[0,*])-1 do oplot,wave,alldatas[*,jjj],color=jjj
+< ;            pause
+<             loadct,0,/silent
+<             oplot,wave,outarray[*,2],thick=2
+<             oplot,wave,outarray[*,3],color=100,thick=2
+---
+> 
+>             plot,wave,outarray[*,8],title='The signal-to-noise for '+binname,$
+>               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,yrange=[0,200],$
+>               ytitle='S/N',/ynozero
+>             loadct,4,/silent
+>             oplot,wave,outarray[*,0]/outarray[*,1],color=60,thick=2
+>             oplot,wave,outarray[*,4]/outarray[*,5],color=110,thick=2
+>             oplot,wave,outarray[*,8],color=150,thick=2
+>             oplot,wave,outarray[*,9],color=250,thick=2
+>             xyouts,0.15,0.90,'Biweight S/N',color=60,charsize=2,/normal
+>             xyouts,0.15,0.86,'Inverse Variance S/N',color=110,charsize=2,/normal
+>             xyouts,0.15,0.82,'Classic S/N (weighted)',color=150,charsize=2,/normal
+>             xyouts,0.15,0.78,'Classic S/N (unweighted)',color=250,charsize=2,/normal
+842c852
+<             device,file=binname+'unscaled.ps',/color
+---
+>             device,file=binname+'_normalized_spectra.ps',/color
+844,845c854,855
+<             plot,wave,outarray[*,0],title='The unscaled data '+binname,$
+<               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,$
+---
+>             plot,wave,outarray[*,10],title=binname+' Biweight = blue, IVW = orange',$
+>               xrange=[3600,5800],xtitle='Wavelength (A)',/xstyle,yrange=[-0.2,1.2],/ys,$
+847,851c857,861
+<             loadct,33
+<             for jjj=0,n_elements(alldata[0,*])-1 do oplot,wave,alldata[*,jjj],color=jjj
+<             loadct,0,/silent
+<             oplot,wave,outarray[*,0],color=50,thick=2
+<             oplot,wave,outarray[*,1],color=150,thick=2
+---
+> ;            loadct,33
+> ;            for jjj=0,n_elements(alldata[0,*])-1 do oplot,wave,alldata[*,jjj],color=jjj
+>             loadct,4,/silent
+>             oplot,wave,outarray[*,10],color=60,thick=2
+>             oplot,wave,outarray[*,11],color=180,thick=2
+854,865c864,868
+<             set_plot,'ps'
+<             device,file=binname+'scaled.ps',/color
+<             loadct,0
+<             plot,wave,outarray[*,2],title='The scaled data '+binname,$
+<               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,$
+<               ytitle='Flux',/ynozero,xthick=2,ythick=2,charthick=2
+<             loadct,33
+<             for jjj=0,n_elements(alldatas[0,*])-1 do oplot,wave,alldatas[*,jjj],color=jjj
+<             loadct,0,/silent
+<             oplot,wave,outarray[*,2],thick=2
+<             oplot,wave,outarray[*,3],color=100,thick=2
+<             device,/close_file
+---
+>             m1 = median(outarray[1500:1800,8])
+>             m2 = median(outarray[1500:1800,9])
+>             if (m1+m2 lt  80) then yr = [0,max([m1,m2])+10]
+>             if (m1+m2 gt 100) then yr = [0,max([m1,m2])+25]
+>             if (m1+m2 gt 200) then yr = [0,max([m1,m2])+50]
+868c871
+<             device,file=binname+'S2N.ps',/color
+---
+>             device,file=binname+'_S2N.ps',/color
+870,875c873,878
+<             plot,wave,outarray[*,4],title='The signal-2-noise '+binname,$
+<               xrange=[3500,5800],xtitle='Wavelength (A)',/xstyle,$
+<               ytitle='S/N',/ynozero,/nodata,xthick=2,ythick=2,charthick=2
+<             loadct,4
+<             oplot,wave,outarray[*,4],color=60,thick=2
+<             oplot,wave,outarray[*,5],color=150,thick=2
+---
+>             plot,wave,outarray[*,9],title=binname+' S/N: weighted = blue, unweighted = orange',$
+>               xrange=[3600,5800],xtitle='Wavelength (A)',/xstyle,yrange=[yr[0],yr[1]],/ys,$
+>               ytitle='S/N',xthick=2,ythick=2,charthick=2
+>             loadct,4,/silent
+>             oplot,wave,outarray[*,8],color=60,thick=2
+>             oplot,wave,outarray[*,9],color=180,thick=2
+885a889,896
+> if (lastplot eq 'on') then begin
+>    print,''
+>    print,'The next ENTER deletes all open plots.'
+>    print,''
+>    pause
+>    while !d.window ne -1 do wdelete, !d.window
+> endif
+> 
+888,892d898
+< print,'The next ENTER deletes all open plots.'
+< print,''
+< 
+< pause
+< while !d.window ne -1 do wdelete, !d.window
